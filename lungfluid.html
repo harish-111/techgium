@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Lung Fluid & Impedance Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+    margin: 0;
+    font-family: "Segoe UI", sans-serif;
+    background: #F4F7FB;
+    color: #102027;
+}
+
+.header {
+    padding: 20px;
+    text-align: center;
+    font-size: 28px;
+    font-weight: 600;
+    color: #1E88E5;
+}
+
+.container {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 20px;
+    padding: 20px;
+}
+
+.panel {
+    background: white;
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+
+.panel h3 {
+    color: #1E88E5;
+}
+
+.metric {
+    font-size: 18px;
+    margin: 8px 0;
+}
+
+.status {
+    font-size: 26px;
+    font-weight: bold;
+    padding: 12px;
+    border-radius: 10px;
+    margin-top: 15px;
+    text-align: center;
+}
+
+.dashboard {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.card {
+    background: white;
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+
+.card h3 {
+    color: #1E88E5;
+}
+
+canvas {
+    width: 100% !important;
+    height: 230px !important;
+}
+
+.footer {
+    text-align: center;
+    font-size: 13px;
+    padding: 10px;
+    opacity: 0.6;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">🫁 Thoracic Fluid and Lung Monitoring Dashboard</div>
+
+<div class="container">
+
+<!-- LEFT PANEL -->
+<div class="panel">
+    <h3>Patient Summary</h3>
+    <p class="metric"><b>ID:</b> PT-0921</p>
+    <p class="metric"><b>Condition:</b> Cardio Pulmonary Health Monitoring</p>
+    <p class="metric"><b>Impedance Range:</b> 28Ω – 62Ω</p>
+    <p class="metric"><b>Fluid Index:</b> <span id="fluidIndex">42%</span></p>
+
+    <div id="statusBox" class="status">MODERATE FLUID RETENTION</div>
+
+    <h3 style="margin-top:20px;">AI Interpretation</h3>
+    <p id="aiText">
+        Thoracic impedance indicates moderate fluid retention. Monitor progression.
+    </p>
+</div>
+
+<!-- RIGHT DASHBOARD -->
+<div class="dashboard">
+
+    <div class="card">
+        <h3>Multi-Frequency Impedance</h3>
+        <canvas id="impedanceChart"></canvas>
+    </div>
+
+    <div class="card">
+        <h3>Lung Fluid Heatmap</h3>
+        <canvas id="heatmapChart"></canvas>
+    </div>
+
+    <div class="card" style="grid-column: span 2;">
+        <h3>Fluid Trend (Live)</h3>
+        <canvas id="trendChart"></canvas>
+    </div>
+
+    <div class="card" style="grid-column: span 2;">
+        <h3>2-Week Fluid Trend Comparison</h3>
+        <canvas id="historyChart"></canvas>
+    </div>
+
+</div>
+</div>
+
+<div class="footer">
+    AI-Based Pulmonary Fluid Monitoring System
+</div>
+
+<script>
+function rand(min, max) {
+    return Math.random() * (max - min) + min;
+}
+
+/* ---------------- IMPEDANCE ---------------- */
+const impedanceChart = new Chart(document.getElementById("impedanceChart"), {
+    type: "line",
+    data: {
+        labels: ["5kHz","10kHz","20kHz","50kHz","100kHz"],
+        datasets: [{
+            data: [55, 48, 42, 38, 35],
+            borderColor: "#1E88E5",
+            borderWidth: 3,
+            tension: 0.4
+        }]
+    },
+    options: {
+        plugins: { legend: { display: false }},
+        scales: {
+            x: {
+                title: {
+                    display: true,
+                    text: "Frequency (kHz)"
+                }
+            },
+            y: {
+                title: {
+                    display: true,
+                    text: "Impedance (Ω)"
+                }
+            }
+        }
+    }
+});
+
+/* ---------------- HEATMAP ---------------- */
+const heatmapChart = new Chart(document.getElementById("heatmapChart"), {
+    type: "bar",
+    data: {
+        labels: ["UL","UR","LL","LR"],
+        datasets: [{
+            data: [45, 55, 65, 50],
+            backgroundColor: ["#81C784","#FFD54F","#E57373","#FFB74D"]
+        }]
+    },
+    options: {
+        plugins: { legend: { display: false }},
+        scales: {
+            x: {
+                title: {
+                    display: true,
+                    text: "Lung Regions"
+                }
+            },
+            y: {
+                title: {
+                    display: true,
+                    text: "Fluid Level (%)"
+                },
+                min: 0,
+                max: 100
+            }
+        }
+    }
+});
+
+/* ---------------- LIVE TREND ---------------- */
+const trendChart = new Chart(document.getElementById("trendChart"), {
+    type: "line",
+    data: {
+        labels: Array.from({length: 30}, (_, i) => i),
+        datasets: [{
+            label: "Current",
+            data: Array.from({length: 30}, () => rand(35,55)),
+            borderColor: "#43A047",
+            backgroundColor: "rgba(67,160,71,0.15)",
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        plugins: { legend: { display: false }},
+        scales: {
+            x: {
+                title: {
+                    display: true,
+                    text: "Time (Seconds)"
+                }
+            },
+            y: {
+                title: {
+                    display: true,
+                    text: "Fluid Index (%)"
+                },
+                min: 0,
+                max: 100
+            }
+        }
+    }
+});
+
+/* ---------------- 2 WEEK HISTORY ---------------- */
+const historyChart = new Chart(document.getElementById("historyChart"), {
+    type: "line",
+    data: {
+        labels: ["D-14","D-13","D-12","D-11","D-10","D-9","D-8","D-7","D-6","D-5","D-4","D-3","D-2","D-1"],
+        datasets: [
+            {
+                label: "Current",
+                data: Array.from({length: 14}, () => rand(40,60)),
+                borderColor: "#1E88E5",
+                tension: 0.4
+            },
+            {
+                label: "Previous",
+                data: Array.from({length: 14}, () => rand(30,50)),
+                borderColor: "#B0BEC5",
+                borderDash: [6,6],
+                tension: 0.4
+            }
+        ]
+    },
+    options: {
+        scales: {
+            x: {
+                title: {
+                    display: true,
+                    text: "Days"
+                }
+            },
+            y: {
+                title: {
+                    display: true,
+                    text: "Fluid Index (%)"
+                },
+                min: 0,
+                max: 100
+            }
+        }
+    }
+});
+
+/* ---------------- LIVE UPDATE ---------------- */
+setInterval(() => {
+    const val = rand(35, 65);
+    document.getElementById("fluidIndex").textContent = val.toFixed(1) + "%";
+
+    trendChart.data.datasets[0].data.shift();
+    trendChart.data.datasets[0].data.push(val);
+    trendChart.update();
+
+    historyChart.data.datasets[0].data.shift();
+    historyChart.data.datasets[0].data.push(val);
+    historyChart.update();
+
+    const status = document.getElementById("statusBox");
+    const text = document.getElementById("aiText");
+
+    if (val < 40) {
+        status.style.background = "#C8E6C9";
+        status.textContent = "LOW FLUID ACCUMULATION";
+        text.textContent = "Fluid levels are within safe range.";
+    } else if (val < 55) {
+        status.style.background = "#FFF9C4";
+        status.textContent = "MODERATE FLUID ACCUMULATION";
+        text.textContent = "Moderate fluid increase detected. Monitor trend.";
+    } else {
+        status.style.background = "#FFCDD2";
+        status.textContent = "HIGH FLUID ACCUMULATION";
+        text.textContent = "Critical fluid retention detected. Clinical action advised.";
+    }
+
+}, 1200);
+</script>
+
+</body>
+</html>

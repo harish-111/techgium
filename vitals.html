@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI Patient Vitals Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+    margin: 0;
+    font-family: "Segoe UI", sans-serif;
+    background: #F4F7FB;
+    color: #102027;
+}
+
+.header {
+    padding: 20px;
+    text-align: center;
+    font-size: 28px;
+    font-weight: 600;
+    color: #1E88E5;
+}
+
+.container {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 20px;
+    padding: 20px;
+}
+
+/* LEFT PANEL */
+.profile {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+
+.profile h3 {
+    color: #1E88E5;
+    margin-top: 18px;
+}
+
+.profile p {
+    margin: 6px 0;
+    font-size: 15px;
+}
+
+/* VITAL BOX GRID */
+.vital-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin: 15px 0;
+}
+
+.vital-box {
+    border-radius: 12px;
+    padding: 14px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.vital-box span {
+    display: block;
+    font-size: 24px;
+    margin-top: 6px;
+}
+
+/* COLORS */
+.safe { background: #C8E6C9; }
+.warn { background: #FFF9C4; }
+.critical { background: #FFCDD2; }
+
+/* RISK */
+.risk {
+    font-size: 28px;
+    padding: 14px;
+    border-radius: 12px;
+    text-align: center;
+    font-weight: bold;
+    margin: 20px 0;
+}
+
+/* DASHBOARD */
+.dashboard {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.card {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+
+.card h3 {
+    color: #1E88E5;
+}
+
+canvas {
+    width: 100% !important;
+    height: 230px !important;
+}
+
+.footer {
+    text-align: center;
+    font-size: 13px;
+    opacity: 0.6;
+    padding: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">Patient Vitals Monitoring Dashboard</div>
+
+<div class="container">
+
+<!-- LEFT PANEL -->
+<div class="profile">
+    <h3>Patient Profile</h3>
+    <p><b>ID:</b> PT-0921</p>
+    <p><b>Age:</b> 56</p>
+    <p><b>Condition:</b> Cardio-Pulmonary Monitoring</p>
+    <p><b>Status:</b> Under Observation</p>
+
+    <h3>Live Vitals</h3>
+    <div class="vital-grid">
+        <div id="hrBox" class="vital-box">❤️ HR<span>--</span></div>
+        <div id="rrBox" class="vital-box">🫁 RR<span>--</span></div>
+        <div id="spo2Box" class="vital-box">🩸 SpO₂<span>--</span></div>
+        <div id="tempBox" class="vital-box">🌡 Temp<span>--</span></div>
+    </div>
+
+    <div id="riskBox" class="risk">RISK: MODERATE</div>
+
+    <h3>AI Interpretation</h3>
+    <p id="aiText">Vitals are stable with mild variations.</p>
+</div>
+
+<!-- RIGHT PANEL -->
+<div class="dashboard">
+
+    <div class="card"><h3>ECG Signal</h3><canvas id="ecgChart"></canvas></div>
+    <div class="card"><h3>SpO₂ (%)</h3><canvas id="spo2Chart"></canvas></div>
+    <div class="card"><h3>Heart Rate (BPM)</h3><canvas id="hrChart"></canvas></div>
+    <div class="card"><h3>Respiratory Rate</h3><canvas id="rrChart"></canvas></div>
+
+    <div class="card" style="grid-column: span 2;">
+        <h3>Body Temperature (°C)</h3>
+        <canvas id="tempChart"></canvas>
+    </div>
+    <div class="card"><h3>BMI Analysis</h3><canvas id="bmiChart"></canvas></div>
+    <div class="card"><h3>BSA Analysis</h3><canvas id="bsaChart"></canvas></div>
+    <div class="card"><h3>IMU Activity</h3><canvas id="imuChart"></canvas></div>
+    <div class="card"><h3>PPG Signal</h3><canvas id="ppgChart"></canvas></div>
+
+
+</div>
+</div>
+
+<div class="footer">AI-Powered Clinical Monitoring System</div>
+
+<script>
+function rand(min, max) {
+    return Math.random() * (max - min) + min;
+}
+
+function createChart(ctx, min, max, color, yLabel) {
+    return new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: Array.from({ length: 60 }, (_, i) => i),
+            datasets: [{
+                data: Array.from({ length: 60 }, () => rand(min, max)),
+                borderColor: color,
+                borderWidth: 2,
+                pointRadius: 0,
+                tension: 0.4
+            }]
+        },
+        options: {
+            animation: false,
+            plugins: { legend: { display: false }},
+            scales: {
+                x: { title: { display: true, text: "Time (s)" }},
+                y: { title: { display: true, text: yLabel }}
+            }
+        }
+    });
+}
+
+/* CHARTS */
+const ecg  = createChart(ecgChart, -1.2, 1.3, "#1E88E5", "Amplitude (mV)");
+const spo2 = createChart(spo2Chart, 94, 99, "#43A047", "SpO₂ (%)");
+const hr   = createChart(hrChart, 60, 110, "#1E88E5", "BPM");
+const rr   = createChart(rrChart, 12, 22, "#00897B", "Breaths/min");
+const temp = createChart(tempChart, 36.4, 37.6, "#FB8C00", "°C");
+const bmi  = createChart(bmiChart, 18, 30, "#6A1B9A", "BMI (kg/m²)");
+const bsa  = createChart(bsaChart, 1.5, 2.2, "#0277BD", "BSA (m²)");
+const imu  = createChart(imuChart, 0, 15, "#00695C", "Acceleration (m/s²)");
+const ppg  = createChart(ppgChart, 0.2, 1.2, "#D81B60", "PPG Amplitude");
+
+
+/* ELEMENTS */
+const hrBox = document.getElementById("hrBox");
+const rrBox = document.getElementById("rrBox");
+const spo2Box = document.getElementById("spo2Box");
+const tempBox = document.getElementById("tempBox");
+const riskBox = document.getElementById("riskBox");
+const aiText = document.getElementById("aiText");
+
+/* REAL-TIME UPDATE */
+setInterval(() => {
+[ecg, spo2, hr, rr, temp, bmi, bsa, imu, ppg].forEach(chart => {
+        chart.data.datasets[0].data.shift();
+        chart.data.datasets[0].data.push(rand(
+            chart.data.datasets[0].data[0] - 0.4,
+            chart.data.datasets[0].data[0] + 0.4
+        ));
+        chart.update();
+    });
+
+    const hrVal = hr.data.datasets[0].data.at(-1);
+    const rrVal = rr.data.datasets[0].data.at(-1);
+    const spo2Val = spo2.data.datasets[0].data.at(-1);
+    const tempVal = temp.data.datasets[0].data.at(-1);
+
+    updateVital(hrBox, `${hrVal.toFixed(0)} bpm`, hrVal >= 60 && hrVal <= 100);
+    updateVital(rrBox, `${rrVal.toFixed(0)} /min`, rrVal >= 12 && rrVal <= 20);
+    updateVital(spo2Box, `${spo2Val.toFixed(1)} %`, spo2Val >= 95);
+    updateVital(tempBox, `${tempVal.toFixed(1)} °C`, tempVal < 37.8);
+
+    let issues = 0;
+    if (hrVal > 100 || hrVal < 55) issues++;
+    if (rrVal > 22 || rrVal < 10) issues++;
+    if (spo2Val < 94) issues++;
+    if (tempVal > 38) issues++;
+
+    if (issues === 0) {
+        riskBox.textContent = "RISK: LOW";
+        riskBox.style.background = "#C8E6C9";
+        aiText.textContent = "Patient vitals are within normal limits.";
+    } else if (issues === 1) {
+        riskBox.textContent = "RISK: MODERATE";
+        riskBox.style.background = "#FFF9C4";
+        aiText.textContent = "Mild abnormalities detected. Continue monitoring.";
+    } else {
+        riskBox.textContent = "RISK: HIGH";
+        riskBox.style.background = "#FFCDD2";
+        aiText.textContent = "Multiple abnormal vitals detected. Immediate review advised.";
+    }
+
+}, 1000);
+
+function updateVital(box, value, normal) {
+    box.querySelector("span").textContent = value;
+    box.className = "vital-box " + (normal ? "safe" : "warn");
+}
+</script>
+
+</body>
+</html>

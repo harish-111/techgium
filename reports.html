@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Clinical Summary & Decision Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+    margin: 0;
+    font-family: "Segoe UI", sans-serif;
+    background: #F4F7FB;
+    color: #102027;
+}
+
+.header {
+    text-align: center;
+    padding: 22px;
+    font-size: 28px;
+    font-weight: 600;
+    color: #1E88E5;
+}
+
+.container {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 20px;
+    padding: 20px;
+}
+
+.panel {
+    background: white;
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+
+.panel h3 {
+    color: #1E88E5;
+}
+
+.metric {
+    font-size: 16px;
+    margin: 6px 0;
+}
+
+.risk-box {
+    font-size: 26px;
+    padding: 14px;
+    border-radius: 10px;
+    margin: 15px 0;
+    text-align: center;
+    font-weight: bold;
+}
+
+.confidence {
+    margin-top: 15px;
+}
+
+.conf-bar {
+    height: 16px;
+    background: #ddd;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.conf-fill {
+    height: 100%;
+    width: 70%;
+    background: linear-gradient(90deg, #66bb6a, #43a047);
+}
+
+.actions button,
+.panel button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.monitor { background: #E3F2FD; }
+.review { background: #FFF9C4; }
+.alert { background: #FFCDD2; }
+
+.dashboard {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.card {
+    background: white;
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+
+.card h3 {
+    color: #1E88E5;
+}
+
+canvas {
+    width: 100% !important;
+    height: 230px !important;
+}
+
+/* Explain AI */
+.explain-box {
+    display: none;
+    background: #E3F2FD;
+    padding: 12px;
+    border-radius: 10px;
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+/* Doctor Notes */
+.notes-box {
+    margin-top: 20px;
+}
+
+.notes-box textarea {
+    width: 100%;
+    height: 90px;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-family: "Segoe UI", sans-serif;
+    resize: none;
+}
+
+.saved-notes {
+    margin-top: 10px;
+    font-size: 14px;
+    background: #F1F8FF;
+    padding: 10px;
+    border-radius: 8px;
+    display: none;
+}
+
+.footer {
+    text-align: center;
+    font-size: 13px;
+    opacity: 0.6;
+    padding: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">🧠 Clinical Summary and Decision Support</div>
+
+<div class="container">
+
+<!-- LEFT PANEL -->
+<div class="panel">
+    <h3>Patient Summary</h3>
+    <p class="metric"><b>ID:</b> PT-0921</p>
+    <p class="metric"><b>Status:</b> Under Monitoring</p>
+
+    <div id="riskBox" class="risk-box">MODERATE RISK</div>
+
+    <div class="confidence">
+        <b>AI Confidence</b>
+        <div class="conf-bar">
+            <div id="confidenceFill" class="conf-fill"></div>
+        </div>
+    </div>
+
+    <button class="monitor">Monitor Only</button>
+    <button class="review">Review in 24 hrs</button>
+    <button class="alert">Immediate Attention</button>
+
+    <button class="monitor" onclick="toggleExplain()">Explain AI Decision</button>
+
+    <div id="explainBox" class="explain-box">
+        AI detected increasing impedance, irregular respiration, and rising fluid trend.
+        Model confidence derived from CNN + BiLSTM temporal analysis.
+    </div>
+
+    <!-- Doctor Notes -->
+    <div class="notes-box">
+        <h3>Doctor Notes</h3>
+        <textarea id="doctorNotes" placeholder="Enter clinical observations, medication changes, or instructions..."></textarea>
+        <button class="monitor" onclick="saveNotes()">Save Notes</button>
+        <div id="savedNotes" class="saved-notes"></div>
+    </div>
+
+    <h3 style="margin-top:20px;">Export</h3>
+    <button class="monitor" onclick="exportCSV()">Export CSV</button>
+    <button class="review" onclick="exportPDF()">Export PDF</button>
+</div>
+
+<!-- RIGHT PANEL -->
+<div class="dashboard">
+
+    <div class="card">
+        <h3>Daily Risk Trend</h3>
+        <canvas id="dailyChart"></canvas>
+    </div>
+
+    <div class="card">
+        <h3>Weekly Risk History</h3>
+        <canvas id="weeklyChart"></canvas>
+    </div>
+
+    <div class="card" style="grid-column: span 2;">
+        <h3>AI Confidence Timeline</h3>
+        <canvas id="confidenceChart"></canvas>
+    </div>
+
+</div>
+</div>
+
+<div class="footer">
+    AI Clinical Decision Support System — Hospital Grade
+</div>
+
+<script>
+function rand(min, max) {
+    return Math.random() * (max - min) + min;
+}
+
+/* Charts */
+const dailyChart = new Chart(document.getElementById("dailyChart"), {
+    type: "line",
+    data: {
+        labels: ["6am","9am","12pm","3pm","6pm","9pm"],
+        datasets: [{
+            data: [45,48,50,55,53,58],
+            borderColor: "#1E88E5",
+            fill: true,
+            backgroundColor: "rgba(30,136,229,0.15)"
+        }]
+    },
+    options: {
+        scales: {
+            x: { title: { display: true, text: "Time of Day" }},
+            y: { title: { display: true, text: "Risk Score (%)" }, min: 0, max: 100 }
+        }
+    }
+});
+
+const weeklyChart = new Chart(document.getElementById("weeklyChart"), {
+    type: "bar",
+    data: {
+        labels: ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],
+        datasets: [{
+            data: [42,45,47,50,53,55,58],
+            backgroundColor: "#90CAF9"
+        }]
+    },
+    options: {
+        scales: {
+            x: { title: { display: true, text: "Days" }},
+            y: { title: { display: true, text: "Average Risk (%)" }, min: 0, max: 100 }
+        }
+    }
+});
+
+const confidenceChart = new Chart(document.getElementById("confidenceChart"), {
+    type: "line",
+    data: {
+        labels: ["T-6","T-5","T-4","T-3","T-2","T-1","Now"],
+        datasets: [{
+            data: [65,68,70,73,75,78,82],
+            borderColor: "#43A047",
+            tension: 0.4
+        }]
+    },
+    options: {
+        scales: {
+            x: { title: { display: true, text: "Time" }},
+            y: { title: { display: true, text: "AI Confidence (%)" }, min: 0, max: 100 }
+        }
+    }
+});
+
+/* LIVE UPDATE */
+setInterval(() => {
+    const risk = rand(40, 75);
+    const conf = rand(60, 95);
+
+    document.getElementById("confidenceFill").style.width = conf + "%";
+
+    const box = document.getElementById("riskBox");
+
+    if (risk < 50) {
+        box.textContent = "LOW RISK";
+        box.style.background = "#C8E6C9";
+    } else if (risk < 65) {
+        box.textContent = "MODERATE RISK";
+        box.style.background = "#FFF9C4";
+    } else {
+        box.textContent = "HIGH RISK";
+        box.style.background = "#FFCDD2";
+    }
+
+    dailyChart.data.datasets[0].data.shift();
+    dailyChart.data.datasets[0].data.push(risk);
+    dailyChart.update();
+
+    weeklyChart.data.datasets[0].data.shift();
+    weeklyChart.data.datasets[0].data.push(rand(45, 65));
+    weeklyChart.update();
+
+    confidenceChart.data.datasets[0].data.shift();
+    confidenceChart.data.datasets[0].data.push(conf);
+    confidenceChart.update();
+
+}, 1500);
+
+/* Export */
+function exportCSV() {
+    const rows = [
+        ["Metric","Value"],
+        ["Risk Level", document.getElementById("riskBox").innerText],
+        ["AI Confidence", document.getElementById("confidenceFill").style.width]
+    ];
+    let csv = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+    const link = document.createElement("a");
+    link.href = encodeURI(csv);
+    link.download = "clinical_report.csv";
+    link.click();
+}
+
+function exportPDF() {
+    window.print();
+}
+
+function toggleExplain() {
+    const box = document.getElementById("explainBox");
+    box.style.display = box.style.display === "block" ? "none" : "block";
+}
+
+/* Doctor Notes */
+function saveNotes() {
+    const text = document.getElementById("doctorNotes").value;
+    if (!text) return;
+    const saved = document.getElementById("savedNotes");
+    saved.textContent = "Saved Notes: " + text;
+    saved.style.display = "block";
+}
+</script>
+
+</body>
+</html>

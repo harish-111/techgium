@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI Risk Prediction Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+    margin: 0;
+    font-family: "Segoe UI", sans-serif;
+    background: #F4F7FB;
+    color: #102027;
+}
+
+.header {
+    text-align: center;
+    padding: 22px;
+    font-size: 28px;
+    font-weight: 600;
+    color: #1E88E5;
+}
+
+.container {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 20px;
+    padding: 20px;
+}
+
+/* Panels */
+.panel, .card {
+    background: white;
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+
+.panel h3, .card h3 {
+    color: #1E88E5;
+}
+
+.risk-box {
+    margin-top: 15px;
+    padding: 14px;
+    border-radius: 10px;
+    font-size: 26px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.conf-bar {
+    width: 100%;
+    height: 16px;
+    background: #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.conf-fill {
+    height: 100%;
+    width: 60%;
+    background: linear-gradient(90deg, #4caf50, #81c784);
+    transition: 0.5s;
+}
+
+.explain-btn {
+    margin-top: 15px;
+    padding: 10px;
+    border: none;
+    background: #1E88E5;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.explain-box {
+    display: none;
+    margin-top: 12px;
+    background: #E3F2FD;
+    padding: 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.dashboard {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+canvas {
+    width: 100% !important;
+    height: 260px !important;
+}
+
+.footer {
+    text-align: center;
+    font-size: 13px;
+    opacity: 0.6;
+    padding: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">🧠 Ai Based Clinical Risk Assesment</div>
+
+<div class="container">
+
+<!-- LEFT PANEL -->
+<div class="panel">
+    <h3>Patient Snapshot</h3>
+    <p><b>ID:</b> PT-0921</p>
+    <p><b>Monitoring:</b> Continuous</p>
+
+    <div id="riskBox" class="risk-box">MODERATE RISK</div>
+
+    <div class="confidence">
+        <b>Model Confidence</b>
+        <div class="conf-bar">
+            <div id="confidenceFill" class="conf-fill"></div>
+        </div>
+    </div>
+
+    <button class="explain-btn" onclick="toggleExplain()">Explain AI Decision</button>
+
+    <div id="explainBox" class="explain-box"></div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dashboard">
+
+    <div class="card">
+        <h3>24 Hour Risk Prediction</h3>
+        <canvas id="predictionChart"></canvas>
+    </div>
+
+    <div class="card">
+        <h3>Attention Heatmap</h3>
+        <canvas id="attentionChart"></canvas>
+    </div>
+
+    <div class="card" style="grid-column: span 2;">
+        <h3>Patient vs Healthy Baseline</h3>
+        <canvas id="comparisonChart"></canvas>
+    </div>
+
+</div>
+</div>
+
+<div class="footer">
+    AI Clinical Decision Support System
+</div>
+
+<script>
+function rand(min, max) {
+    return Math.random() * (max - min) + min;
+}
+
+/* ================= CHARTS ================= */
+
+const predictionChart = new Chart(document.getElementById("predictionChart"), {
+    type: "line",
+    data: {
+        labels: Array.from({length: 24}, (_, i) => `${i}h`),
+        datasets: [{
+            label: "Risk %",
+            data: Array.from({length: 24}, () => rand(40, 65)),
+            borderColor: "#1E88E5",
+            backgroundColor: "rgba(30,136,229,0.15)",
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        scales: {
+            x: { title: { display: true, text: "Time (Hours)" }},
+            y: { title: { display: true, text: "Risk Level (%)" }, min: 0, max: 100 }
+        }
+    }
+});
+
+const attentionChart = new Chart(document.getElementById("attentionChart"), {
+    type: "bar",
+    data: {
+        labels: ["ECG", "Resp", "Impedance", "SpO₂", "Temp", "PPG"],
+        datasets: [{
+            data: [70, 55, 80, 45, 40, 60],
+            backgroundColor: ["#1E88E5","#64B5F6","#FFB74D","#81C784","#E57373","#BA68C8"]
+        }]
+    },
+    options: {
+        scales: {
+            x: { title: { display: true, text: "Physiological Signals" }},
+            y: { title: { display: true, text: "Attention Weight (%)" }, min: 0, max: 100 }
+        },
+        plugins: { legend: { display: false } }
+    }
+});
+
+const comparisonChart = new Chart(document.getElementById("comparisonChart"), {
+    type: "line",
+    data: {
+        labels: ["T-6","T-5","T-4","T-3","T-2","T-1","Now"],
+        datasets: [
+            {
+                label: "Patient",
+                data: [45,48,52,55,58,60,63],
+                borderColor: "#1E88E5",
+                tension: 0.4
+            },
+            {
+                label: "Healthy",
+                data: [40,42,43,44,45,46,47],
+                borderColor: "#B0BEC5",
+                borderDash: [6,6],
+                tension: 0.4
+            }
+        ]
+    },
+    options: {
+        scales: {
+            x: { title: { display: true, text: "Time" }},
+            y: { title: { display: true, text: "Physiological Index" }}
+        }
+    }
+});
+
+/* ================= LIVE UPDATE ================= */
+
+setInterval(() => {
+    let newRisk = rand(40, 70);
+
+    predictionChart.data.datasets[0].data.shift();
+    predictionChart.data.datasets[0].data.push(newRisk);
+    predictionChart.update();
+
+    attentionChart.data.datasets[0].data =
+        attentionChart.data.datasets[0].data.map(v => Math.min(100, Math.max(30, v + rand(-5, 5))));
+    attentionChart.update();
+
+    comparisonChart.data.datasets[0].data.shift();
+    comparisonChart.data.datasets[0].data.push(newRisk);
+
+    comparisonChart.data.datasets[1].data.shift();
+    comparisonChart.data.datasets[1].data.push(rand(42, 48));
+    comparisonChart.update();
+
+    const riskBox = document.getElementById("riskBox");
+    const conf = document.getElementById("confidenceFill");
+
+    let confidence = rand(70, 95);
+    conf.style.width = confidence + "%";
+
+    if (newRisk < 45) {
+        riskBox.textContent = "LOW RISK";
+        riskBox.style.background = "#C8E6C9";
+    } else if (newRisk < 58) {
+        riskBox.textContent = "MODERATE RISK";
+        riskBox.style.background = "#FFF9C4";
+    } else {
+        riskBox.textContent = "HIGH RISK";
+        riskBox.style.background = "#FFCDD2";
+    }
+}, 1500);
+
+/* ================= AI EXPLANATION ================= */
+
+function toggleExplain() {
+    const box = document.getElementById("explainBox");
+    box.style.display = box.style.display === "block" ? "none" : "block";
+
+    box.innerHTML = `
+    <b>AI Interpretation:</b>
+    <ul>
+        <li>ECG variability indicates mild cardiac stress.</li>
+        <li>PPG shows moderate perfusion fluctuation.</li>
+        <li>Respiratory rhythm shows slight irregularity.</li>
+        <li>Impedance trend suggests early fluid retention.</li>
+        <li>SpO₂ remains within safe clinical range.</li>
+        <li>Overall risk trending upward over 24 hours.</li>
+        <li>Recommended continuous monitoring.</li>
+    </ul>`;
+}
+</script>
+
+</body>
+</html>

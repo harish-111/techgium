@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Clinical Dashboard Hub</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+:root {
+  --bg-light: #f6f8fb;
+  --bg-dark: #0e1b23;
+  --card-light: #ffffff;
+  --card-dark: #13242f;
+  --accent: #1e88e5;
+  --text-light: #102027;
+  --text-dark: #eaf2f8;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: "Segoe UI", sans-serif;
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  background: var(--bg-light);
+  color: var(--text-light);
+  overflow: hidden;
+  transition: 0.4s;
+}
+
+/* ECG BACKGROUND */
+.ecg-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.12;
+}
+
+.ecg-line {
+  stroke: #1e88e5;
+  stroke-width: 2;
+  fill: none;
+  stroke-dasharray: 1000;
+  animation: ecgMove 6s linear infinite;
+}
+
+@keyframes ecgMove {
+  0% { stroke-dashoffset: 1000; }
+  100% { stroke-dashoffset: 0; }
+}
+
+/* DASHBOARD */
+.dashboard {
+  height: 100vh;
+  padding: 30px;
+  position: relative;
+  z-index: 1;
+}
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.toggle {
+  cursor: pointer;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: #1e88e5;
+  color: white;
+}
+
+.title {
+  text-align: center;
+  font-size: 32px;
+  margin: 20px 0;
+  color: #1e88e5;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2,1fr);
+  gap: 25px;
+}
+
+.card {
+  background: var(--card-light);
+  padding: 30px;
+  border-radius: 18px;
+  box-shadow: 0 10px 35px rgba(0,0,0,.15);
+  cursor: pointer;
+  transition: .3s;
+}
+
+.card:hover {
+  transform: translateY(-6px);
+}
+
+.card h2 {
+  color: #1e88e5;
+}
+
+/* DARK MODE */
+.dark {
+  background: var(--bg-dark);
+  color: var(--text-dark);
+}
+
+.dark .card {
+  background: var(--card-dark);
+}
+
+/* FOOTER */
+.footer {
+  text-align: center;
+  margin-top: 30px;
+  opacity: 0.6;
+}
+</style>
+</head>
+
+<body>
+
+<svg class="ecg-bg" viewBox="0 0 1000 200" preserveAspectRatio="none">
+  <polyline class="ecg-line"
+    points="0,100 80,100 100,40 120,160 150,100 220,100 260,60 300,100 380,100 420,30 460,170 500,100 600,100 650,70 700,100 800,100 850,40 900,160 1000,100"/>
+</svg>
+
+<div class="dashboard">
+
+  <div class="top-bar">
+    <h3 id="roleLabel"></h3>
+    <div class="toggle" onclick="toggleTheme()">Toggle Theme</div>
+  </div>
+
+  <div class="title">🏥 Clinical Monitoring Dashboard</div>
+
+  <div class="grid">
+
+    <a href="./ai.html">
+      <div class="card">
+        <h2>AI Risk Prediction</h2>
+        <p>Predictive insights & clinical decision support.</p>
+      </div>
+    </a>
+
+    <a href="./lungfluid.html">
+      <div class="card">
+        <h2>Lung & Fluid Monitoring</h2>
+        <p>Impedance, fluid detection and pulmonary trends.</p>
+      </div>
+    </a>
+
+    <a href="./reports.html">
+      <div class="card">
+        <h2>Clinical Summary</h2>
+        <p>Reports, alerts and medical overview.</p>
+      </div>
+    </a>
+
+    <a href="./vitals.html">
+      <div class="card">
+        <h2>Patient Vitals</h2>
+        <p>Live ECG, SpO₂, heart rate & respiratory metrics.</p>
+      </div>
+    </a>
+
+  </div>
+
+  <div class="footer">
+    Secure Clinical Platform • Hospital Grade
+  </div>
+</div>
+
+<script>
+document.getElementById("roleLabel").innerText =
+  "Role: " + (localStorage.getItem("role") || "User");
+
+function toggleTheme(){
+  document.body.classList.toggle("dark");
+}
+</script>
+
+</body>
+</html>
